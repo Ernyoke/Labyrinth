@@ -5,21 +5,24 @@
         android:title="@string/action_settings"
         android:orderInCategory="100"
         android:showAsAction="never" />
+    <group
+        android:checkableBehavior="single" >
     <item android:id="@+id/action_touch"
         android:title="@string/action_touch"
         android:orderInCategory="100"
-        android:showAsAction="never" />
+        android:showAsAction="never"/>
     <item android:id="@+id/action_accelerometer"
         android:title="@string/action_accelerometer"
         android:orderInCategory="100"
-        android:showAsAction="never" />
+        android:showAsAction="never"/>
     <item android:id="@+id/action_gravity"
         android:title="@string/action_gravity"
         android:orderInCategory="100"
-        android:showAsAction="never" />
+        android:showAsAction="never"/>
     <item android:id="@+id/action_speech"
         android:title="@string/action_speech"
         android:orderInCategory="100"
-        android:showAsAction="never" />
+        android:showAsAction="never"/>
+    </group>
 
 </menu>

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +20,9 @@ public class LabyrinthActivity extends Activity {
 
     private static final String TAG = "com.sapientia.ernyoke.labyrinth";
     private static final String CONTROL = "CONTROL";
+
+    private PowerManager pm;
+    private PowerManager.WakeLock wl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +48,9 @@ public class LabyrinthActivity extends Activity {
         labView = new LabyrinthView(this, labModel, difficulty);
         setContentView(labView);
         sharedPreferences = getSharedPreferences(TAG, MODE_PRIVATE);
+
+        pm = (PowerManager) getSystemService(this.POWER_SERVICE);
+        wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG);
     }
 
 
@@ -51,6 +58,29 @@ public class LabyrinthActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+        String inputControl = sharedPreferences.getString(CONTROL, "TOUCH");
+        if(inputControl.equals("TOUCH")) {
+            MenuItem item =  menu.findItem(R.id.action_touch);
+            item.setChecked(true);
+        }
+        else {
+            if(inputControl.equals("ACCELEROMETER")) {
+                MenuItem item =  menu.findItem(R.id.action_accelerometer);
+                item.setChecked(true);
+            }
+            else {
+                if(inputControl.equals("GRAVITY")) {
+                    MenuItem item =  menu.findItem(R.id.action_gravity);
+                    item.setChecked(true);
+                }
+                else {
+                    if(inputControl.equals("SPEECH")) {
+                        MenuItem item =  menu.findItem(R.id.action_speech);
+                        item.setChecked(true);
+                    }
+                }
+            }
+        }
         return true;
     }
 
@@ -59,6 +89,7 @@ public class LabyrinthActivity extends Activity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+
         int id = item.getItemId();
         switch (id) {
             case R.id.action_accelerometer: {
@@ -67,6 +98,7 @@ public class LabyrinthActivity extends Activity {
                 }
                 else {
                     Toast.makeText(this, "Accelerometer input set!", Toast.LENGTH_SHORT).show();
+                    item.setChecked(true);
                 }
                 break;
             }
@@ -76,6 +108,7 @@ public class LabyrinthActivity extends Activity {
                 }
                 else {
                     Toast.makeText(this, "Touch input set!", Toast.LENGTH_SHORT).show();
+                    item.setChecked(true);
                 }
                 break;
             }
@@ -85,6 +118,7 @@ public class LabyrinthActivity extends Activity {
                 }
                 else {
                     Toast.makeText(this, "Gravity sensor set!", Toast.LENGTH_SHORT).show();
+                    item.setChecked(true);
                 }
                 break;
             }
@@ -94,6 +128,7 @@ public class LabyrinthActivity extends Activity {
                 }
                 else {
                     Toast.makeText(this, "Speech recognition input set!", Toast.LENGTH_SHORT).show();
+                    item.setChecked(true);
                 }
                 break;
             }
@@ -112,6 +147,7 @@ public class LabyrinthActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        wl.release();
         labView.unregisterSensors();
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(CONTROL, labView.getInputControl().toString());
@@ -121,6 +157,7 @@ public class LabyrinthActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        wl.acquire();
         String inputControl = sharedPreferences.getString(CONTROL, "TOUCH");
         if(inputControl.equals("TOUCH")) {
             labView.setInputControl(LabyrinthView.CONTROL.TOUCH);
@@ -128,14 +165,17 @@ public class LabyrinthActivity extends Activity {
         else {
             if(inputControl.equals("ACCELEROMETER")) {
                 labView.setInputControl(LabyrinthView.CONTROL.ACCELEROMETER);
+
             }
             else {
                 if(inputControl.equals("GRAVITY")) {
                     labView.setInputControl(LabyrinthView.CONTROL.GRAVITY);
+
                 }
                 else {
                     if(inputControl.equals("SPEECH")) {
                         labView.setInputControl(LabyrinthView.CONTROL.SPEECH);
+
                     }
                 }
             }

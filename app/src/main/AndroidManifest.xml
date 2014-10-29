@@ -3,6 +3,7 @@
     package="com.sapientia.ernyoke.labyrinth" >
     
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
@@ -16,7 +17,7 @@
         </activity>
         <activity
             android:name=".MainMenu"
-            android:label="@string/title_activity_main_menu" >
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
