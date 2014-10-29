@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Labyrinth</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_accelerometer">Use accelerometer</string>
+    <string name="action_gravity">Use gravity sensor</string>
+    <string name="action_touch">Use touch input</string>
+    <string name="title_activity_main_menu">MainMenu</string>
+    <string name="dialog_title">You Win!</string>
+    <string name="dialog_text_next">Would you like to try another difficulty?</string>
+    <string name="dialog_text_last">Would you like to play again?</string>
+    <string name="retry">Yes</string>
+    <string name="go_to_mainmenu">Go back to Main Menu</string>
+    <string name="go_to_next">Go to next difficulty</string>
+
+</resources>

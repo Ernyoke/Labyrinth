@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="labyrinthEasy">
+        <item>0000000001</item>
+        <item>0111110110</item>
+        <item>0100000110</item>
+        <item>0101111000</item>
+        <item>0101000010</item>
+        <item>0101011010</item>
+        <item>0101011110</item>
+        <item>0101000010</item>
+        <item>0101111010</item>
+        <item>0100000010</item>
+        <item>0111111110</item>
+        <item>1000000000</item>
+    </string-array>
+    <string-array name="labyrinthMedium">
+        <item>0001100001</item>
+        <item>1011110101</item>
+        <item>0001000000</item>
+        <item>0100011010</item>
+        <item>0101110111</item>
+        <item>0010100100</item>
+        <item>1000110110</item>
+        <item>1011000100</item>
+        <item>1000010101</item>
+        <item>0011110001</item>
+        <item>1010100101</item>
+        <item>1000110100</item>
+    </string-array>
+    <string-array name="labyrinthDifficult">
+        <item>0000000010</item>
+        <item>0101010101</item>
+        <item>1010100010</item>
+        <item>0000010101</item>
+        <item>1010000000</item>
+        <item>0001010101</item>
+        <item>1010101000</item>
+        <item>0000000100</item>
+        <item>1010101010</item>
+        <item>0100010101</item>
+        <item>1010100000</item>
+        <item>0100000100</item>
+    </string-array>
+</resources>

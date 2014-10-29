@@ -1,0 +1,48 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.sapientia.ernyoke.labyrinth.MainMenu">
+
+    <TextView
+        android:text="@string/hello_world"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:id="@+id/title"
+        android:paddingTop="150dp"
+        android:textSize="40dip"/>
+
+    <Button
+        android:layout_width="200dip"
+        android:layout_height="wrap_content"
+        android:text="Easy"
+        android:id="@+id/easyBtn"
+        android:layout_below="@+id/title"
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:layout_width="200dip"
+        android:layout_height="wrap_content"
+        android:text="Medium"
+        android:id="@+id/mediumBtn"
+        android:layout_below="@+id/easyBtn"
+        android:layout_centerHorizontal="true"/>
+
+    <Button
+        android:layout_width="200dip"
+        android:layout_height="wrap_content"
+        android:text="Hard"
+        android:id="@+id/hardBtn"
+        android:layout_below="@+id/mediumBtn"
+        android:layout_centerHorizontal="true"/>
+
+
+
+
+
+</RelativeLayout>
