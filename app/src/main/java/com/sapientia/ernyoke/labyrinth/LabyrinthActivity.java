@@ -86,6 +86,16 @@ public class LabyrinthActivity extends Activity {
                 else {
                     Toast.makeText(this, "Gravity sensor set!", Toast.LENGTH_SHORT).show();
                 }
+                break;
+            }
+            case R.id.action_speech: {
+                if(!labView.setInputControl(LabyrinthView.CONTROL.SPEECH)) {
+                    Toast.makeText(this, "Speech recognition is not available!", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Toast.makeText(this, "Speech recognition input set!", Toast.LENGTH_SHORT).show();
+                }
+                break;
             }
 
         }
@@ -122,6 +132,11 @@ public class LabyrinthActivity extends Activity {
             else {
                 if(inputControl.equals("GRAVITY")) {
                     labView.setInputControl(LabyrinthView.CONTROL.GRAVITY);
+                }
+                else {
+                    if(inputControl.equals("SPEECH")) {
+                        labView.setInputControl(LabyrinthView.CONTROL.SPEECH);
+                    }
                 }
             }
         }

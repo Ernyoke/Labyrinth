@@ -14,5 +14,6 @@
     <string name="retry">Yes</string>
     <string name="go_to_mainmenu">Go back to Main Menu</string>
     <string name="go_to_next">Go to next difficulty</string>
+    <string name="action_speech">Speech recognition</string>
 
 </resources>

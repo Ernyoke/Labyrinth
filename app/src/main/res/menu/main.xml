@@ -17,5 +17,9 @@
         android:title="@string/action_gravity"
         android:orderInCategory="100"
         android:showAsAction="never" />
+    <item android:id="@+id/action_speech"
+        android:title="@string/action_speech"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
 
 </menu>

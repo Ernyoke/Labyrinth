@@ -15,12 +15,18 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class LabyrinthView extends View implements SensorEventListener{
+public class LabyrinthView extends View implements SensorEventListener, RecognitionListener {
     private LabyrinthModel model;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
@@ -46,7 +52,7 @@ public class LabyrinthView extends View implements SensorEventListener{
     private long lastDetection;
     private long currentDetection;
 
-    public enum CONTROL {ACCELEROMETER, TOUCH, GRAVITY};
+    public enum CONTROL {ACCELEROMETER, TOUCH, GRAVITY, SPEECH};
 
     private CONTROL inputControl;
 
@@ -58,6 +64,12 @@ public class LabyrinthView extends View implements SensorEventListener{
     private boolean isEnd = false;
 
     private MainMenu.DIFFICULTY currentDiff;
+
+    private SpeechRecognizer sr;
+
+    private static final String[] directions = {"left", "right", "up", "down"};
+
+    private Intent listenIntent;
 
 
     public LabyrinthView(Context context, LabyrinthModel model, MainMenu.DIFFICULTY currentDiff) {
@@ -297,6 +309,7 @@ public class LabyrinthView extends View implements SensorEventListener{
     private boolean checkIfHasSensor(CONTROL control) {
         switch (control) {
             case ACCELEROMETER: {
+                this.unregisterSensors();
                 for (int i = 0; i< sensorList.size(); i++) {
                     if (sensorList.get(i).getType() == Sensor.TYPE_ACCELEROMETER) {
                         sensorManager.unregisterListener(this);
@@ -308,6 +321,7 @@ public class LabyrinthView extends View implements SensorEventListener{
                 break;
             }
             case GRAVITY: {
+                this.unregisterSensors();
                 for (int i = 0; i< sensorList.size(); i++) {
                     if (sensorList.get(i).getType() == Sensor.TYPE_GRAVITY) {
                         sensorManager.unregisterListener(this);
@@ -319,15 +333,35 @@ public class LabyrinthView extends View implements SensorEventListener{
                 break;
             }
             case TOUCH: {
-                sensorManager.unregisterListener(this);
+                this.unregisterSensors();
                 return  true;
             }
+
+            case SPEECH: {
+                Log.d("TAG", "speech");
+                this.unregisterSensors();
+                sr = SpeechRecognizer.createSpeechRecognizer(context);
+                sr.setRecognitionListener(this);
+                listenIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                listenIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                listenIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"voice.recognition.test");
+
+                listenIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,5);
+                sr.startListening(listenIntent);
+                return true;
+            }
+
         }
         return false;
     }
 
 
     public void unregisterSensors() {
+        if(sr != null) {
+            sr.stopListening();
+            sr.cancel();
+            sr.destroy();
+        }
         sensorManager.unregisterListener(this);
     }
 
@@ -375,6 +409,75 @@ public class LabyrinthView extends View implements SensorEventListener{
         }
 
         alertDialog.show();
+    }
+
+    //speech recognizer
+    @Override
+    public void onReadyForSpeech(Bundle bundle) {
+        //Log.d("TAG", "onReadyForSpeech");
+    }
+
+    @Override
+    public void onBeginningOfSpeech() {
+        //Log.d("TAG", "onBeginningOfSpeech");
+    }
+
+    @Override
+    public void onRmsChanged(float v) {
+        //Log.d("TAG", "onRmsChanged");
+    }
+
+    @Override
+    public void onBufferReceived(byte[] bytes) {
+        //Log.d("TAG", "onBufferReceived");
+    }
+
+    @Override
+    public void onEndOfSpeech() {
+        //Log.d("TAG", "onEndofSpeech");
+    }
+
+    @Override
+    public void onError(int i) {
+        //Log.d("TAG",  "error " + i);
+        sr.startListening(listenIntent);
+    }
+
+    @Override
+    public void onResults(Bundle results) {
+        ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        for (int i = 0; i < data.size(); i++)
+        {
+            Log.d("TAG", data.get(i));
+            if(data.get(i).equals("left")) {
+                model.left();
+                break;
+            }
+            if(data.get(i).equals("right")) {
+                model.right();
+                break;
+            }
+            if(data.get(i).equals("up")) {
+                model.up();
+                break;
+            }
+            if(data.get(i).equals("down")) {
+                model.down();
+                break;
+            }
+        }
+        invalidate();
+        sr.startListening(listenIntent);
+    }
+
+    @Override
+    public void onPartialResults(Bundle bundle) {
+
+    }
+
+    @Override
+    public void onEvent(int i, Bundle bundle) {
+
     }
 
 }
