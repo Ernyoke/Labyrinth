@@ -23,6 +23,10 @@
         android:title="@string/action_speech"
         android:orderInCategory="100"
         android:showAsAction="never"/>
+    <item android:id="@+id/action_mi"
+         android:title="@string/action_mi"
+         android:orderInCategory="100"
+         android:showAsAction="never"/>
     </group>
 
 </menu>
