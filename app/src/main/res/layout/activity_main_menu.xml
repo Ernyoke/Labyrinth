@@ -41,6 +41,21 @@
         android:layout_below="@+id/mediumBtn"
         android:layout_centerHorizontal="true"/>
 
+    <Button
+        android:layout_width="200dip"
+        android:layout_height="wrap_content"
+        android:text="Get more online"
+        android:id="@+id/netBtn"
+        android:layout_below="@+id/hardBtn"
+        android:layout_centerHorizontal="true"/>
+
+    <ProgressBar
+        android:id="@+id/rolling"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true" />
+
 
 
 

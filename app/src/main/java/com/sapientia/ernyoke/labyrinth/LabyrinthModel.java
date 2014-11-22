@@ -215,7 +215,7 @@ public class LabyrinthModel {
             Position currentPos = path.get(0);
             cur_x = currentPos.getX();
             cur_y = currentPos.getY();
-//            Log.d("TAG", cur_x + " " + cur_y);
+//            Log.d(TAG", cur_x + " " + cur_y);
             touched.add(currentPos);
             path.remove(0);
             if(cur_x == win_x && cur_y == win_y) {

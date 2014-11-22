@@ -2,7 +2,6 @@ package com.sapientia.ernyoke.labyrinth;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -14,6 +13,7 @@ import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -21,12 +21,12 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.Set;
 
 
 public class LabyrinthActivity extends Activity implements SensorEventListener, RecognitionListener {
@@ -35,9 +35,6 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
     private LabyrinthModel labModel;
     SharedPreferences sharedPreferences;
 
-    private static final String TAG = "com.sapientia.ernyoke.labyrinth";
-    private static final String CTRL = "CONTROL";
-
     private PowerManager pm;
     private PowerManager.WakeLock wl;
 
@@ -45,7 +42,8 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
     private float motionStart_y;
 
     private static final int TIME = 300;
-    private static final double G = 4;
+    private static final double G = 9.81;
+    private double sensitivity = 0;
 
     private long lastDetection;
     private long currentDetection;
@@ -65,14 +63,23 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
 
     private Intent listenIntent;
 
+    private int netLevel;
+    private int finalNetLevel;
+
+    private AsyncTask solver;
+
+    private Menu optionsMenu;
+
+    private long startTime;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //setContentView(R.layout.activity_main);
         Intent intent = this.getIntent();
         Bundle bundle = intent.getExtras();
-        MainMenu.DIFFICULTY difficulty = (MainMenu.DIFFICULTY)bundle.get(MainMenu.DIFF_ID);
-        switch (difficulty) {
+        currentDiff = (MainMenu.DIFFICULTY)bundle.get(Constants.DIFF_ID);
+        switch (currentDiff) {
             case EASY: {
                 readLabyrinth(R.array.labyrinthEasy);
                 break;
@@ -85,15 +92,23 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                 readLabyrinth(R.array.labyrinthDifficult);
                 break;
             }
+            case NET: {
+                String labyrinth = bundle.getString(Constants.LAB);
+                netLevel = bundle.getInt(Constants.NET_LEVEL);
+                finalNetLevel = bundle.getInt(Constants.FINAL_NET_LEVEL);
+                readLabyrinth(labyrinth);
+                break;
+            }
         }
         this.getAvailableSensors();
         labView = new LabyrinthView(this, labModel);
         setContentView(labView);
-        sharedPreferences = getSharedPreferences(TAG, MODE_PRIVATE);
+        //sharedPreferences = getSharedPreferences(Constants.TAG, MODE_PRIVATE);
         pm = (PowerManager) getSystemService(this.POWER_SERVICE);
-        wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG);
+        wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, Constants.TAG);
 
-
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        startTime = System.currentTimeMillis();
     }
 
 
@@ -101,40 +116,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-        String input = sharedPreferences.getString(CTRL, "TOUCH");
-        if(input.equals("TOUCH")) {
-            MenuItem item =  menu.findItem(R.id.action_touch);
-            item.setChecked(true);
-            inputControl = CONTROL.TOUCH;
-        }
-        else {
-            if(input.equals("ACCELEROMETER")) {
-                MenuItem item =  menu.findItem(R.id.action_accelerometer);
-                item.setChecked(true);
-                inputControl = CONTROL.ACCELEROMETER;
-            }
-            else {
-                if(input.equals("GRAVITY")) {
-                    MenuItem item =  menu.findItem(R.id.action_gravity);
-                    item.setChecked(true);
-                    inputControl = CONTROL.GRAVITY;
-                }
-                else {
-                    if(input.equals("SPEECH")) {
-                        MenuItem item =  menu.findItem(R.id.action_speech);
-                        item.setChecked(true);
-                        inputControl = CONTROL.SPEECH;
-                    }
-                    else {
-                        if(input.equals("MI")) {
-                            MenuItem item =  menu.findItem(R.id.action_gravity);
-                            item.setChecked(true);
-                            inputControl = CONTROL.MI;
-                        }
-                    }
-                }
-            }
-        }
+        optionsMenu = menu;
         return true;
     }
 
@@ -144,6 +126,8 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
 
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+
         int id = item.getItemId();
         switch (id) {
             case R.id.action_accelerometer: {
@@ -152,6 +136,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                 }
                 else {
                     Toast.makeText(this, "Accelerometer input set!", Toast.LENGTH_SHORT).show();
+//                    editor.putString(Settings.INPUT_TYPE, Constants.ACCELEROMETER);
                     item.setChecked(true);
                 }
                 break;
@@ -162,6 +147,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                 }
                 else {
                     Toast.makeText(this, "Touch input set!", Toast.LENGTH_SHORT).show();
+//                    editor.putString(Settings.INPUT_TYPE, Constants.TOUCH);
                     item.setChecked(true);
                 }
                 break;
@@ -172,6 +158,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                 }
                 else {
                     Toast.makeText(this, "Gravity sensor set!", Toast.LENGTH_SHORT).show();
+//                    editor.putString(Settings.INPUT_TYPE, Constants.GRAVITY);
                     item.setChecked(true);
                 }
                 break;
@@ -182,6 +169,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                 }
                 else {
                     Toast.makeText(this, "Speech recognition input set!", Toast.LENGTH_SHORT).show();
+//                    editor.putString(Settings.INPUT_TYPE, Constants.SPEECH);
                     item.setChecked(true);
                 }
                 break;
@@ -192,13 +180,27 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                     Toast.makeText(this, "Not today!", Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    Toast.makeText(this, "Self solve set!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Self solve set! You can cancel self solving anytime by touching the screen!", Toast.LENGTH_SHORT).show();
+//                    editor.putString(Settings.INPUT_TYPE, Constants.MI);
                     item.setChecked(true);
                 }
                 break;
             }
 
+            case R.id.action_settings: {
+                Intent settingsIntent = new Intent(LabyrinthActivity.this, Settings.class);
+                //cancel SELF SOLVER if it is still running
+                if(inputControl == CONTROL.MI) {
+                    if(!solver.isCancelled()) {
+                        solver.cancel(true);
+                    }
+                }
+                this.unregisterSensors();
+                startActivity(settingsIntent);
+            }
+
         }
+//        editor.commit();
         return super.onOptionsItemSelected(item);
     }
 
@@ -209,13 +211,24 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
         labModel.initLabyrinth(labyrinthRows);
     }
 
+    private void readLabyrinth(String labyrinth) {
+        String[] labyrinthRows = labyrinth.split("#");
+
+        int rows = Integer.parseInt(labyrinthRows[0]);
+        int cols = Integer.parseInt(labyrinthRows[0]);
+        String[] finalLab = new String[rows];
+        System.arraycopy(labyrinthRows, 2, finalLab, 0, rows);
+        labModel = new LabyrinthModel();
+        labModel.initLabyrinth(finalLab);
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
         wl.release();
         unregisterSensors();
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(CTRL, inputControl.toString());
+        editor.putString(Settings.INPUT_TYPE, inputControl.toString());
         editor.commit();
     }
 
@@ -223,11 +236,19 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
     protected void onResume() {
         super.onResume();
         wl.acquire();
-        String input = sharedPreferences.getString(CTRL, "TOUCH");
+        String input = sharedPreferences.getString(Settings.INPUT_TYPE, Constants.TOUCH);
+        int sensitivityPercent = sharedPreferences.getInt(Settings.INPUT_SENSITIVITY, 50);
+        sensitivity = (G * (100.0 - (double)sensitivityPercent)) / 100.0;
         CONTROL control = this.stringToControl(input);
         if(checkIfHasSensor(control)) {
             inputControl = control;
+            this.invalidateOptionsMenu();
         }
+        String ballColor = sharedPreferences.getString(Settings.BALL_COLOR, "");
+        String labColor = sharedPreferences.getString(Settings.LAB_COLOR, "");
+        labView.setBallColor(ballColor);
+        labView.setLabyrinthColor(labColor);
+        labView.invalidate();
     }
 
     @Override
@@ -267,6 +288,19 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                 winner();
             }
         }
+        else {
+            Log.d(Constants.TAG, "MI_TOUCH");
+            if(inputControl == CONTROL.MI) {
+                if(solver != null) {
+                    if (!solver.isCancelled()) {
+                        solver.cancel(true);
+                    }
+                }
+                setInputControl(CONTROL.TOUCH);
+                optionsMenu.getItem(1).setChecked(true);
+                Toast.makeText(this, "Self solving canceled!", Toast.LENGTH_SHORT ).show();
+            }
+        }
         return true;
     }
 
@@ -279,7 +313,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                     float[] acceleration;
                     acceleration = sensorEvent.values;
 
-                    if(Math.abs(acceleration[0]) > G) {
+                    if(Math.abs(acceleration[0]) > sensitivity) {
                         if(acceleration[0] > 0) {
                             labModel.left();
                         }
@@ -288,7 +322,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                         }
                     }
 
-                    if(Math.abs(acceleration[1]) > G) {
+                    if(Math.abs(acceleration[1]) > sensitivity) {
                         if(acceleration[1] > 0) {
                             labModel.down();
                         }
@@ -312,7 +346,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                     float[] acceleration;
                     acceleration = sensorEvent.values;
 
-                    if(Math.abs(acceleration[0]) > G) {
+                    if(Math.abs(acceleration[0]) > sensitivity) {
                         if(acceleration[0] > 0) {
                             labModel.left();
                         }
@@ -321,7 +355,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                         }
                     }
 
-                    if(Math.abs(acceleration[1]) > G) {
+                    if(Math.abs(acceleration[1]) > sensitivity) {
                         if(acceleration[1] > 0) {
                             labModel.down();
                         }
@@ -393,24 +427,23 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
             }
 
             case SPEECH: {
-                Log.d("TAG", "speech");
+                //TODO
                 this.unregisterSensors();
                 sr = SpeechRecognizer.createSpeechRecognizer(this);
                 sr.setRecognitionListener(this);
                 listenIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                 listenIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                 listenIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,"voice.recognition.test");
-
                 listenIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,15);
                 sr.startListening(listenIntent);
                 return true;
             }
 
             case MI: {
-                Log.d("TAG", "MI");
+                Log.d(Constants.TAG, "MI");
                     this.unregisterSensors();
                     solveThis();
-                break;
+                return true;
             }
 
         }
@@ -429,25 +462,28 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
 
     private void winner() {
         unregisterSensors();
+        long endTime = System.currentTimeMillis();
+        long interval = endTime - startTime;
+        double ellapsed = interval / 1000.0;
         isEnd = true;
         AlertDialog alertDialog = new AlertDialog.Builder(this).create();
         alertDialog.setCanceledOnTouchOutside(false);
         alertDialog.setTitle(getString(R.string.dialog_title));
-        alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.go_to_mainmenu), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                finish();
+        if(currentDiff != MainMenu.DIFFICULTY.HARD && currentDiff != MainMenu.DIFFICULTY.NET) {
+            alertDialog.setButton(DialogInterface.BUTTON_POSITIVE, getString(R.string.go_to_mainmenu), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    finish();
 
-            }
-        });
-        if(currentDiff != MainMenu.DIFFICULTY.HARD) {
-            alertDialog.setMessage(getString(R.string.dialog_text_next));
+                }
+            });
+            alertDialog.setMessage(getString(R.string.dialog_text_next) + "\n Finished in: " + ellapsed + " seconds!");
             alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.go_to_next), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     Intent resultIntent = new Intent();
-                    resultIntent.putExtra("requestCode", MainMenu.REQ_CODE);
-                    setResult(MainMenu.NEXT_DIFF);
+                    resultIntent.putExtra("requestCode", Constants.REQ_CODE);
+                    setResult(Constants.NEXT_DIFF);
                     finish();
                     isEnd = false;
                     return;
@@ -455,18 +491,34 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
             });
         }
         else {
-            alertDialog.setMessage(getString(R.string.dialog_text_last));
-            alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.retry), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    Intent resultIntent = new Intent();
-                    resultIntent.putExtra("requestCode", MainMenu.REQ_CODE);
-                    setResult(MainMenu.NEXT_DIFF);
-                    finish();
-                    isEnd = false;
-                    return;
-                }
-            });
+            if(currentDiff != MainMenu.DIFFICULTY.NET) {
+                alertDialog.setMessage("Finished in: " + ellapsed + " seconds!");
+                alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.retry), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra("requestCode", Constants.REQ_CODE);
+                        setResult(Constants.NEXT_NET_LEVEL);
+                        finish();
+                        isEnd = false;
+                        return;
+                    }
+                });
+            }
+            else {
+                alertDialog.setMessage("Finished in: " + ellapsed + " seconds!");
+                alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.retry), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra("requestCode", Constants.REQ_CODE);
+                        setResult(Constants.NEXT_NET_LEVEL);
+                        finish();
+                        isEnd = false;
+                        return;
+                    }
+                });
+            }
         }
 
         alertDialog.show();
@@ -476,41 +528,76 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
     //--------------------------------------------------
     @Override
     public void onReadyForSpeech(Bundle bundle) {
-        //Log.d("TAG", "onReadyForSpeech");
+        //Log.d(TAG, "onReadyForSpeech");
     }
 
     @Override
     public void onBeginningOfSpeech() {
-        //Log.d("TAG", "onBeginningOfSpeech");
+        //Log.d(TAG, "onBeginningOfSpeech");
     }
 
     @Override
     public void onRmsChanged(float v) {
-        //Log.d("TAG", "onRmsChanged");
+        //Log.d(TAG, "onRmsChanged");
     }
 
     @Override
     public void onBufferReceived(byte[] bytes) {
-        //Log.d("TAG", "onBufferReceived");
+        //Log.d(TAG", "onBufferReceived");
     }
 
     @Override
     public void onEndOfSpeech() {
-        //Log.d("TAG", "onEndofSpeech");
+        //Log.d(TAG", "onEndofSpeech");
     }
 
     @Override
     public void onError(int i) {
-        //Log.d("TAG",  "error " + i);
+        Log.d(Constants.TAG,  "error " + i);
+        switch(i) {
+            case SpeechRecognizer.ERROR_AUDIO: {
+                Log.d(Constants.TAG, "Audio Error!");
+                break;
+            }
+            case SpeechRecognizer.ERROR_CLIENT: {
+                Log.d(Constants.TAG, "Client error!");
+                break;
+            }
+            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS: {
+                Log.d(Constants.TAG, "Insufficient permissions!");
+                break;
+            }
+            case SpeechRecognizer.ERROR_NETWORK: {
+                Log.d(Constants.TAG, "Network error!");
+                break;
+            }
+            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT: {
+                Log.d(Constants.TAG, "Network timeout!");
+                break;
+            }
+            case SpeechRecognizer.ERROR_NO_MATCH: {
+                Log.d(Constants.TAG, "No match found!");
+                break;
+            }
+            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT: {
+                Log.d(Constants.TAG, "Speech timeout!");
+                break;
+            }
+
+        }
         sr.startListening(listenIntent);
     }
 
     @Override
     public void onResults(Bundle results) {
         ArrayList<String> data = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        //float[] confidence = results.getFloatArray(SpeechRecognizer.CONFIDENCE_SCORES);
+
+        Log.d(Constants.TAG, "RESULTS:");
+
         for (int i = 0; i < data.size(); i++)
         {
-            Log.d("TAG", data.get(i));
+            //Log.d(TAG, data.get(i));
             if(data.get(i).equals("left")) {
                 labModel.left();
                 break;
@@ -528,6 +615,12 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                 break;
             }
         }
+
+        for (int i = 0; i < data.size(); i++) {
+            Log.d(Constants.TAG, data.get(i));
+        }
+
+
         if(labModel.isWinner()) {
             winner();
             labView.invalidate();
@@ -551,23 +644,23 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
     //---------------------------------------------
 
     private CONTROL stringToControl(String input) {
-        if(input.equals("TOUCH")) {
+        if(input.equals(Constants.TOUCH)) {
             return CONTROL.TOUCH;
         }
         else {
-            if(input.equals("ACCELEROMETER")) {
+            if(input.equals(Constants.ACCELEROMETER)) {
                 return CONTROL.ACCELEROMETER;
             }
             else {
-                if(input.equals("GRAVITY")) {
+                if(input.equals(Constants.GRAVITY)) {
                     return CONTROL.GRAVITY;
                 }
                 else {
-                    if(input.equals("SPEECH")) {
+                    if(input.equals(Constants.SPEECH)) {
                         return CONTROL.SPEECH;
                     }
                     else {
-                        if(input.equals("MI")) {
+                        if(input.equals(Constants.MI)) {
                             return CONTROL.MI;
                         }
                     }
@@ -580,10 +673,10 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
     private void solveThis() {
         final ArrayList<LabyrinthModel.Position> path = labModel.solveSelf();
         for(LabyrinthModel.Position actual : path) {
-            Log.d("TAG", actual.getX() + " " + actual.getY());
+            Log.d(Constants.TAG, actual.getX() + " " + actual.getY());
         }
 
-        new AsyncTask<Integer, Integer, Void>(){
+        solver = new AsyncTask<Integer, Integer, Void>(){
             protected Void doInBackground(Integer... val) {
                 int count = val.length;
                 for (int i = 0; i < val[0]; i++) {
@@ -606,9 +699,50 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                 labView.invalidate();
             }
 
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                if(labModel.isWinner()) {
+                    winner();
+                }
+                super.onPreExecute();
+            }
         }.execute(path.size());
+//        this.winner();
 
+    }
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+
+        Log.d(Constants.TAG, "onPrepareOptionsMenu");
+        switch (inputControl) {
+            case ACCELEROMETER: {
+                MenuItem item = menu.findItem(R.id.action_accelerometer);
+                item.setChecked(true);
+                break;
+            }
+            case GRAVITY: {
+                MenuItem item = menu.findItem(R.id.action_gravity);
+                item.setChecked(true);
+                break;
+            }
+            case TOUCH: {
+                MenuItem item = menu.findItem(R.id.action_touch);
+                item.setChecked(true);
+                break;
+            }
+            case SPEECH: {
+                MenuItem item = menu.findItem(R.id.action_speech);
+                item.setChecked(true);
+                break;
+            }
+            case MI: {
+                MenuItem item = menu.findItem(R.id.action_mi);
+                item.setChecked(true);
+                break;
+            }
+        }
+        return true;
     }
 
 }

@@ -1,0 +1,51 @@
+<resources>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+
+    <!-- Example General settings -->
+    <string name="pref_header_controls">Control Settings</string>
+    <string-array name="pref_control_types">
+        <item>Touch Input</item>
+        <item>Accelerometer</item>
+        <item>Gravity sensor</item>
+        <item>Speech Recognition</item>
+        <item>MI(Self solver)</item>
+    </string-array>
+    <string-array name="pref_control_type_values">
+        <item>TOUCH</item>
+        <item>ACCELEROMETER</item>
+        <item>GRAVITY</item>
+        <item>SPEECH</item>
+        <item>MI</item>
+    </string-array>
+
+    <string-array name="pref_colors">
+        <item>Green</item>
+        <item>Red</item>
+        <item>Blue</item>
+        <item>Purple</item>
+        <item>Yellow</item>
+        <item>Magenta</item>
+    </string-array>
+
+    <string-array name="pref_color_values">
+        <item>GREEN</item>
+        <item>RED</item>
+        <item>BLUE</item>
+        <item>PURPLE</item>
+        <item>YELLOW</item>
+        <item>MAGENTA</item>
+    </string-array>
+
+    <string name="title_control_types">Select Control Types</string>
+    <string name="title_sensitivity">Set sensitivity</string>
+    <string name="title_colors">Set colors</string>
+    <string name="title_lab_color">Set labyrinth colors</string>
+    <string name="title_ball_color">Set ball colors</string>
+
+    <string name="default_control">TOUCH</string>
+    <string name="default_lab_color">GREEN</string>
+    <string name="default_ball_color">YELLOW</string>
+
+</resources>

@@ -1,0 +1,28 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/title_colors"
+        android:key="pref_key_colors">
+
+        <ListPreference
+            android:key="pref_lab_color"
+            android:title="@string/title_lab_color"
+            android:defaultValue="@string/default_lab_color"
+            android:dialogTitle="@string/title_lab_color"
+            android:entries="@array/pref_colors"
+            android:entryValues="@array/pref_color_values"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null" />
+
+        <ListPreference
+            android:key="pref_ball_color"
+            android:title="@string/title_ball_color"
+            android:defaultValue="@string/default_ball_color"
+            android:dialogTitle="@string/title_ball_color"
+            android:entries="@array/pref_colors"
+            android:entryValues="@array/pref_color_values"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null" />
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

@@ -3,28 +3,14 @@ package com.sapientia.ernyoke.labyrinth;
 /**
  * Created by Ernyoke on 10/27/2014.
  */
-import android.app.AlertDialog;
+
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
-import android.os.Bundle;
-import android.speech.RecognitionListener;
-import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class LabyrinthView extends View {
     private LabyrinthModel model;
@@ -37,11 +23,12 @@ public class LabyrinthView extends View {
     private Rect[][] Rectangles;
 
     private Canvas canvas;
-    private int green = Color.GREEN;
-    private int black = Color.BLACK;
-    private int yellow = Color.YELLOW;
 
     private boolean init = false;
+
+    private int labColor = Color.GREEN;
+    private int ballColor = Color.YELLOW;
+    private int backGroundColor = Color.BLACK;
 
 
     public LabyrinthView(Context context, LabyrinthModel model) {
@@ -60,19 +47,19 @@ public class LabyrinthView extends View {
             init = true;
         } else {
 
-            paint.setColor(green);
+            paint.setColor(labColor);
             canvas.drawRect(0, 0, width, height, paint);
-            paint.setColor(black);
+            paint.setColor(backGroundColor);
             canvas.drawRect(4, 4, width - 4, height - 4, paint);
-            paint.setColor(green);
+            paint.setColor(labColor);
             for (int i = 0; i < blocks_in_a_col; i++)
                 for (int j = 0; j < blocks_in_a_row; j++)
                     if (model.getElement(i,j) == 1)
                         canvas.drawRect(Rectangles[i][j], paint);
-            paint.setColor(yellow);
+            paint.setColor(ballColor);
             canvas.drawRect(
                     Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1], paint);
-            paint.setColor(black);
+            paint.setColor(backGroundColor);
             paint.setTextAlign(Paint.Align.CENTER);
             canvas.drawText(
                     "EXIT",
@@ -80,20 +67,20 @@ public class LabyrinthView extends View {
                     (Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].top + Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].bottom) / 2 + 5,
                     paint);
 
-            drawMyCircle(model.getBallrow(), model.getBallcol(), yellow);
+            drawMyCircle(model.getBallrow(), model.getBallcol(), ballColor);
         }
 
     }
 
     private void initialize() {
 
-        paint.setColor( green );
+        paint.setColor( labColor );
         height = this.getHeight();// canvas.getHeight();
         width = this.getWidth();// canvas.getWidth();
         canvas.drawRect(0, 0, width, height, paint);
-        paint.setColor( black );
+        paint.setColor( backGroundColor );
         canvas.drawRect(4, 4, width - 4, height - 4, paint);
-        paint.setColor( green );
+        paint.setColor( labColor );
 
         Rectangles = new Rect[ blocks_in_a_col][ blocks_in_a_row ];
 
@@ -117,10 +104,10 @@ public class LabyrinthView extends View {
 
         }
 
-        paint.setColor(yellow);
+        paint.setColor(ballColor);
         canvas.drawRect(Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1],
                 paint);
-        paint.setColor(black);
+        paint.setColor(backGroundColor);
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTextSize(12);
         canvas.drawText(
@@ -128,7 +115,7 @@ public class LabyrinthView extends View {
                 (Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].left + Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].right) / 2,
                 (Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].top + Rectangles[blocks_in_a_col - 1][blocks_in_a_row - 1].bottom) / 2 + 5,
                 paint);
-        drawMyCircle(model.getBallrow(), model.getBallcol(), yellow);
+        drawMyCircle(model.getBallrow(), model.getBallcol(), ballColor);
     }
 
 
@@ -141,6 +128,36 @@ public class LabyrinthView extends View {
 
     public int getBlockSize() {
         return  width / blocks_in_a_col;
+    }
+
+    public void setLabyrinthColor(String color) {
+        labColor = this.stringColorToInt(color);
+    }
+
+    public void setBallColor(String color) {
+        ballColor = this.stringColorToInt(color);
+    }
+
+    private int stringColorToInt(String color) {
+        if(color.equals(Constants.BLUE)) {
+            return Color.BLUE;
+        }
+        if(color.equals(Constants.RED)) {
+            return Color.RED;
+        }
+        if(color.equals(Constants.YELLOW)) {
+            return Color.YELLOW;
+        }
+        if(color.equals(Constants.GREEN)) {
+            return Color.GREEN;
+        }
+        if(color.equals(Constants.PURPLE)) {
+            return Color.parseColor("#800080");
+        }
+        if(color.equals(Constants.MAGENTA)) {
+            return Color.MAGENTA;
+        }
+        return Color.WHITE;
     }
 
 
