@@ -16,5 +16,18 @@
     <string name="go_to_next">Go to next difficulty</string>
     <string name="action_speech">Speech recognition</string>
     <string name="action_mi">Solve yourself</string>
+    <string name="no_network">There is no network connection available!</string>
+    <string name="finished_in">Finished in: </string>
+    <string name="seconds"> seconds!</string>
+    <string name="self_solving_canceled">Self solving canceled!</string>
+    <string name="stop_self_solving">You can cancel self solving anytime by touching the screen!</string>
+    <string name="accelerometer_set">Accelerometer set!</string>
+    <string name="accelerometer_not">Accelerometer not available!</string>
+    <string name="gravity_set">Gravity sensor set!</string>
+    <string name="gravity_not">Gravity sensor not available!</string>
+    <string name="touch_set">Touch input set!</string>
+    <string name="speech_set">Speech Recognition set!</string>
+    <string name="speech_not">Speech Recognition not available!</string>
+
 
 </resources>

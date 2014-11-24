@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import java.util.concurrent.ExecutionException;
 
@@ -102,42 +105,47 @@ public class MainMenu extends Activity implements View.OnClickListener{
             }
 
             case R.id.netBtn: {
-                currentDiff = DIFFICULTY.NET;
-                bundle.putSerializable(Constants.DIFF_ID, DIFFICULTY.NET);
-                HttpGetter REST_levels = new HttpGetter(rolling);
-                try {
-                    String result = REST_levels.execute(URL_LEVELS).get();
-                    Log.d(Constants.TAG, result);
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("Pick a level:");
-                    final String[] levels = result.split("#");
-                    builder.setItems(levels, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            HttpGetter REST_lab = new HttpGetter(rolling);
-                            try {
-                                String labStr = REST_lab.execute(URL_SELECTED_LEVEL + i).get();
-                                if(labStr != null) {
-                                    bundle.putString(Constants.LAB, labStr);
-                                    bundle.putInt(Constants.NET_LEVEL, i);
-                                    bundle.putInt(Constants.FINAL_NET_LEVEL, levels.length);
-                                    intent.putExtras(bundle);
-                                    setUpPlayground(intent);
+                if (isNetworkAvailable()) {
+                    currentDiff = DIFFICULTY.NET;
+                    bundle.putSerializable(Constants.DIFF_ID, DIFFICULTY.NET);
+                    HttpGetter REST_levels = new HttpGetter(rolling);
+                    try {
+                        String result = REST_levels.execute(URL_LEVELS).get();
+                        Log.d(Constants.TAG, result);
+                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                        builder.setTitle("Pick a level:");
+                        final String[] levels = result.split("#");
+                        builder.setItems(levels, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                HttpGetter REST_lab = new HttpGetter(rolling);
+                                try {
+                                    String labStr = REST_lab.execute(URL_SELECTED_LEVEL + i).get();
+                                    if (labStr != null) {
+                                        bundle.putString(Constants.LAB, labStr);
+                                        bundle.putInt(Constants.NET_LEVEL, i);
+                                        bundle.putInt(Constants.FINAL_NET_LEVEL, levels.length);
+                                        intent.putExtras(bundle);
+                                        setUpPlayground(intent);
+                                    }
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                } catch (ExecutionException e) {
+                                    e.printStackTrace();
                                 }
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            } catch (ExecutionException e) {
-                                e.printStackTrace();
                             }
-                        }
-                    });
-                    builder.show();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
+                        });
+                        builder.show();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    break;
                 }
-                break;
+                else {
+                    Toast.makeText(this, getString(R.string.no_network), Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
@@ -178,11 +186,10 @@ public class MainMenu extends Activity implements View.OnClickListener{
         }
     }
 
-    public void showProgressBar() {
-        this.rolling.setVisibility(View.VISIBLE);
-    }
-
-    public void hideProgressBar() {
-        this.rolling.setVisibility(View.GONE);
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

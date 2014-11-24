@@ -21,12 +21,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.widget.Switch;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 
 public class LabyrinthActivity extends Activity implements SensorEventListener, RecognitionListener {
@@ -75,7 +73,6 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_main);
         Intent intent = this.getIntent();
         Bundle bundle = intent.getExtras();
         currentDiff = (MainMenu.DIFFICULTY)bundle.get(Constants.DIFF_ID);
@@ -132,11 +129,10 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
         switch (id) {
             case R.id.action_accelerometer: {
                 if(!setInputControl(CONTROL.ACCELEROMETER)) {
-                    Toast.makeText(this, "Accelerometer is not available!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.accelerometer_not), Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    Toast.makeText(this, "Accelerometer input set!", Toast.LENGTH_SHORT).show();
-//                    editor.putString(Settings.INPUT_TYPE, Constants.ACCELEROMETER);
+                    Toast.makeText(this, getString(R.string.accelerometer_set), Toast.LENGTH_SHORT).show();
                     item.setChecked(true);
                 }
                 break;
@@ -146,30 +142,27 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                     Toast.makeText(this, "Dafuq???", Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    Toast.makeText(this, "Touch input set!", Toast.LENGTH_SHORT).show();
-//                    editor.putString(Settings.INPUT_TYPE, Constants.TOUCH);
+                    Toast.makeText(this, getString(R.string.touch_set), Toast.LENGTH_SHORT).show();
                     item.setChecked(true);
                 }
                 break;
             }
             case R.id.action_gravity: {
                 if(!setInputControl(CONTROL.GRAVITY)) {
-                    Toast.makeText(this, "Gravity sensor is not available!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.gravity_not), Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    Toast.makeText(this, "Gravity sensor set!", Toast.LENGTH_SHORT).show();
-//                    editor.putString(Settings.INPUT_TYPE, Constants.GRAVITY);
+                    Toast.makeText(this, getString(R.string.gravity_set), Toast.LENGTH_SHORT).show();
                     item.setChecked(true);
                 }
                 break;
             }
             case R.id.action_speech: {
                 if(!setInputControl(CONTROL.SPEECH)) {
-                    Toast.makeText(this, "Speech recognition is not available!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.speech_not), Toast.LENGTH_SHORT).show();
                 }
                 else {
-                    Toast.makeText(this, "Speech recognition input set!", Toast.LENGTH_SHORT).show();
-//                    editor.putString(Settings.INPUT_TYPE, Constants.SPEECH);
+                    Toast.makeText(this, getString(R.string.speech_set), Toast.LENGTH_SHORT).show();
                     item.setChecked(true);
                 }
                 break;
@@ -177,11 +170,10 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
 
             case R.id.action_mi: {
                 if(!setInputControl(CONTROL.MI)) {
-                    Toast.makeText(this, "Not today!", Toast.LENGTH_SHORT).show();
+                    //
                 }
                 else {
-                    Toast.makeText(this, "Self solve set! You can cancel self solving anytime by touching the screen!", Toast.LENGTH_SHORT).show();
-//                    editor.putString(Settings.INPUT_TYPE, Constants.MI);
+                    Toast.makeText(this, getString(R.string.stop_self_solving), Toast.LENGTH_SHORT).show();
                     item.setChecked(true);
                 }
                 break;
@@ -189,18 +181,11 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
 
             case R.id.action_settings: {
                 Intent settingsIntent = new Intent(LabyrinthActivity.this, Settings.class);
-                //cancel SELF SOLVER if it is still running
-                if(inputControl == CONTROL.MI) {
-                    if(!solver.isCancelled()) {
-                        solver.cancel(true);
-                    }
-                }
                 this.unregisterSensors();
                 startActivity(settingsIntent);
             }
 
         }
-//        editor.commit();
         return super.onOptionsItemSelected(item);
     }
 
@@ -244,8 +229,8 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
             inputControl = control;
             this.invalidateOptionsMenu();
         }
-        String ballColor = sharedPreferences.getString(Settings.BALL_COLOR, "");
-        String labColor = sharedPreferences.getString(Settings.LAB_COLOR, "");
+        String ballColor = sharedPreferences.getString(Settings.BALL_COLOR, "YELLOW");
+        String labColor = sharedPreferences.getString(Settings.LAB_COLOR, "GREEN");
         labView.setBallColor(ballColor);
         labView.setLabyrinthColor(labColor);
         labView.invalidate();
@@ -291,14 +276,10 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
         else {
             Log.d(Constants.TAG, "MI_TOUCH");
             if(inputControl == CONTROL.MI) {
-                if(solver != null) {
-                    if (!solver.isCancelled()) {
-                        solver.cancel(true);
-                    }
-                }
+                this.stopSelfSolving();
                 setInputControl(CONTROL.TOUCH);
                 optionsMenu.getItem(1).setChecked(true);
-                Toast.makeText(this, "Self solving canceled!", Toast.LENGTH_SHORT ).show();
+                Toast.makeText(this, getString(R.string.self_solving_canceled), Toast.LENGTH_SHORT ).show();
             }
         }
         return true;
@@ -458,6 +439,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
             sr.destroy();
         }
         sensorManager.unregisterListener(this);
+        this.stopSelfSolving();
     }
 
     private void winner() {
@@ -477,7 +459,7 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
 
                 }
             });
-            alertDialog.setMessage(getString(R.string.dialog_text_next) + "\n Finished in: " + ellapsed + " seconds!");
+            alertDialog.setMessage(getString(R.string.dialog_text_next) + "\n" + getString(R.string.finished_in) + ellapsed + getString(R.string.seconds));
             alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.go_to_next), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
@@ -492,8 +474,8 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
         }
         else {
             if(currentDiff != MainMenu.DIFFICULTY.NET) {
-                alertDialog.setMessage("Finished in: " + ellapsed + " seconds!");
-                alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.retry), new DialogInterface.OnClickListener() {
+                alertDialog.setMessage(getString(R.string.finished_in) + ellapsed + getString(R.string.seconds));
+                alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.go_to_mainmenu), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         Intent resultIntent = new Intent();
@@ -506,8 +488,8 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
                 });
             }
             else {
-                alertDialog.setMessage("Finished in: " + ellapsed + " seconds!");
-                alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.retry), new DialogInterface.OnClickListener() {
+                alertDialog.setMessage(getString(R.string.finished_in) + ellapsed + getString(R.string.seconds));
+                alertDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.go_to_mainmenu), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         Intent resultIntent = new Intent();
@@ -743,6 +725,14 @@ public class LabyrinthActivity extends Activity implements SensorEventListener, 
             }
         }
         return true;
+    }
+
+    private void stopSelfSolving() {
+        if(solver != null) {
+            if (!solver.isCancelled()) {
+                solver.cancel(true);
+            }
+        }
     }
 
 }
