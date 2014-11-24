@@ -50,7 +50,7 @@ public class MainMenu extends Activity implements View.OnClickListener{
         netBtn.setOnClickListener(this);
 
         rolling = (ProgressBar) findViewById(R.id.rolling);
-        rolling.setVisibility(View.GONE);
+        rolling.setVisibility(View.INVISIBLE);
     }
 
 
@@ -111,31 +111,36 @@ public class MainMenu extends Activity implements View.OnClickListener{
                     HttpGetter REST_levels = new HttpGetter(rolling);
                     try {
                         String result = REST_levels.execute(URL_LEVELS).get();
-                        Log.d(Constants.TAG, result);
-                        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                        builder.setTitle("Pick a level:");
-                        final String[] levels = result.split("#");
-                        builder.setItems(levels, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                HttpGetter REST_lab = new HttpGetter(rolling);
-                                try {
-                                    String labStr = REST_lab.execute(URL_SELECTED_LEVEL + i).get();
-                                    if (labStr != null) {
-                                        bundle.putString(Constants.LAB, labStr);
-                                        bundle.putInt(Constants.NET_LEVEL, i);
-                                        bundle.putInt(Constants.FINAL_NET_LEVEL, levels.length);
-                                        intent.putExtras(bundle);
-                                        setUpPlayground(intent);
+//                        Log.d(Constants.TAG, result);
+                        if(result != null) {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                            builder.setTitle("Pick a level:");
+                            final String[] levels = result.split("#");
+                            builder.setItems(levels, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    HttpGetter REST_lab = new HttpGetter(rolling);
+                                    try {
+                                        String labStr = REST_lab.execute(URL_SELECTED_LEVEL + i).get();
+                                        if (labStr != null) {
+                                            bundle.putString(Constants.LAB, labStr);
+                                            bundle.putInt(Constants.NET_LEVEL, i);
+                                            bundle.putInt(Constants.FINAL_NET_LEVEL, levels.length);
+                                            intent.putExtras(bundle);
+                                            setUpPlayground(intent);
+                                        }
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    } catch (ExecutionException e) {
+                                        e.printStackTrace();
                                     }
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                } catch (ExecutionException e) {
-                                    e.printStackTrace();
                                 }
-                            }
-                        });
-                        builder.show();
+                            });
+                            builder.show();
+                        }
+                        else {
+                            Toast.makeText(this, R.string.network_error, Toast.LENGTH_SHORT).show();
+                        }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     } catch (ExecutionException e) {

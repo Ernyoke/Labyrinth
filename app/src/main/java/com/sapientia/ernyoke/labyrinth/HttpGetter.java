@@ -29,7 +29,7 @@ public class HttpGetter extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
-        rolling.setVisibility(View.GONE);
+        rolling.setVisibility(View.INVISIBLE);
     }
 
     @Override
